@@ -3,8 +3,8 @@ const app = express();
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const shortid = require('shortid');
-
 const cors = require('cors');
+const formatLog = require('./utils/formatLog');
 
 const mongoose = require('mongoose');
 mongoose.connect(process.env.MONGO_URI, {
@@ -68,7 +68,10 @@ app.post('/api/exercise/new-user', (req, res, next) => {
 // Endpoint for adding user's exercise
 app.post('/api/exercise/add', (req, res, next) => {
   const { userId, description, duration } = req.body;
-  const date = req.body.date === '' ? new Date() : req.body.date;
+  const date =
+    req.body.date === '' || req.body.date === undefined
+      ? new Date()
+      : req.body.date;
   UserModel.findById({ _id: userId }, (err, user) => {
     if (err) return next(err);
     if (!user) {
@@ -97,11 +100,45 @@ app.post('/api/exercise/add', (req, res, next) => {
   });
 });
 
+// Endpoint for getting all users
+app.get('/api/exercise/users', (req, res, next) => {
+  UserModel.find({})
+    .select({ log: 0 })
+    .exec((err, result) => {
+      if (err) return next(err);
+      res.json(result);
+    });
+});
+
 // Endpoint for getting user's exercise log
 app.get('/api/exercise/log', (req, res, next) => {
-  const { userId } = req.query;
-  console.log(req.query);
-  res.json({ userId: userId });
+  const { userId, from, to, limit } = req.query;
+  UserModel.findById({ _id: userId })
+    .select({ 'log._id': 0 })
+    .exec((err, result) => {
+      if (err) return next(err);
+      if (!result) {
+        next();
+      } else {
+        const { _id, username, log } = result;
+        const { _from, _to, formattedLog } = formatLog(from, to, limit, log);
+        const json = {
+          _id: _id,
+          username: username,
+          from: _from ? _from.toDateString() : undefined,
+          to: _to ? _to.toDateString() : undefined,
+          count: formattedLog.length,
+          log: [...formattedLog],
+        };
+        if (!json.from) {
+          delete json.from;
+        }
+        if (!json.to) {
+          delete json.to;
+        }
+        res.json(json);
+      }
+    });
 });
 
 // Not found middleware
