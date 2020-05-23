@@ -86,14 +86,13 @@ app.post('/api/exercise/add', (req, res, next) => {
         if (saveError) return next(saveError);
         const log = result.log;
         const logIndex = log.length - 1;
-        const savedDate = new Date(log[logIndex].date);
-        const formattedDate = savedDate.toDateString();
+        const savedDate = new Date(log[logIndex].date).toDateString();
         res.json({
           username: result.username,
           description: log[logIndex].description,
           duration: log[logIndex].duration,
           _id: result._id,
-          date: formattedDate,
+          date: savedDate,
         });
       });
     }
