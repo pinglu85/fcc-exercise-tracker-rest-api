@@ -13,7 +13,7 @@
     "dotenv": "^16.0.1",
     "express": "^4.22.1",
     "mongodb": "^4.17.0",
-    "mongoose": "^8.9.5",
+    "mongoose": "^8.22.1",
     "shortid": "^2.2.17"
   },
   "license": "MIT",
